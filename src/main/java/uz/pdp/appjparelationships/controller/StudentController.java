@@ -5,8 +5,15 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
+import uz.pdp.appjparelationships.entity.Address;
+import uz.pdp.appjparelationships.entity.Group;
 import uz.pdp.appjparelationships.entity.Student;
+import uz.pdp.appjparelationships.payload.StudentDTO;
+import uz.pdp.appjparelationships.repository.AddressRepository;
+import uz.pdp.appjparelationships.repository.GroupRepository;
 import uz.pdp.appjparelationships.repository.StudentRepository;
+
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/student")
@@ -14,35 +21,97 @@ public class StudentController {
     @Autowired
     StudentRepository studentRepository;
 
+    @Autowired
+    GroupRepository groupRepository;
+
+    @Autowired
+    AddressRepository addressRepository;
     //1. VAZIRLIK
     @GetMapping("/forMinistry")
     public Page<Student> getStudentListForMinistry(@RequestParam int page) {
-        //1-1=0     2-1=1    3-1=2    4-1=3
-        //select * from student limit 10 offset (0*10)
-        //select * from student limit 10 offset (1*10)
-        //select * from student limit 10 offset (2*10)
-        //select * from student limit 10 offset (3*10)
         Pageable pageable = PageRequest.of(page, 10);
-        Page<Student> studentPage = studentRepository.findAll(pageable);
-        return studentPage;
+        return studentRepository.findAll(pageable);
     }
 
     //2. UNIVERSITY
     @GetMapping("/forUniversity/{universityId}")
     public Page<Student> getStudentListForUniversity(@PathVariable Integer universityId,
                                                      @RequestParam int page) {
-        //1-1=0     2-1=1    3-1=2    4-1=3
-        //select * from student limit 10 offset (0*10)
-        //select * from student limit 10 offset (1*10)
-        //select * from student limit 10 offset (2*10)
-        //select * from student limit 10 offset (3*10)
         Pageable pageable = PageRequest.of(page, 10);
-        Page<Student> studentPage = studentRepository.findAllByGroup_Faculty_UniversityId(universityId, pageable);
-        return studentPage;
+        return studentRepository.findAllByGroup_Faculty_UniversityId(universityId, pageable);
+    }
+    //3. FACULTY DEKANAT
+    @GetMapping(value = "/forFaculty/{facId}")
+    public Page<Student> getStudentsForFaculty(@PathVariable Integer facId,
+                                               @RequestParam int page){
+        Pageable pageable = PageRequest.of(page, 10);
+        return studentRepository.findAllByGroup_Faculty_Id(facId, pageable);
+    }
+    //4. GROUP OWNER
+    @GetMapping(value = "/forGroup/{groupId}")
+    public Page<Student> getStudentsForGroup(@PathVariable Integer groupId,
+                                               @RequestParam int page){
+        Pageable pageable = PageRequest.of(page, 10);
+        return studentRepository.findAllByGroup_Id(groupId, pageable);
     }
 
-    //3. FACULTY DEKANAT
-    //4. GROUP OWNER
+    @GetMapping("/{id}")
+    public Student getOne(@PathVariable Integer id){
+        Optional<Student> optionalStudent = studentRepository.findById(id);
+        return optionalStudent.orElseGet(Student::new);
+    }
 
+    @PostMapping
+    public String addOne(@RequestBody StudentDTO studentDTO){
+        Optional<Group> optionalGroup = groupRepository.findById(studentDTO.getGroup());
+        if (!optionalGroup.isPresent()) return "Group is not found";
+        Address address = new Address();
+        address.setCity(studentDTO.getCity());
+        address.setDistrict(studentDTO.getDistrict());
+        address.setStreet(studentDTO.getStreet());
+        Address savedAddress = addressRepository.save(address);
 
+        Student student = new Student();
+        student.setFirstName(studentDTO.getFirstName());
+        student.setLastName(studentDTO.getLastName());
+        student.setGroup(optionalGroup.get());
+        student.setAddress(savedAddress);
+
+        studentRepository.save(student);
+        return "Student added successfully";
+    }
+
+    @PutMapping("/{id}")
+    public String editOne(@PathVariable Integer id, @RequestBody StudentDTO studentDTO){
+        Optional<Group> optionalGroup = groupRepository.findById(studentDTO.getGroup());
+        if (!optionalGroup.isPresent()) return "Group is not found";
+
+        Optional<Student> optionalStudent = studentRepository.findById(id);
+        if (!optionalStudent.isPresent()) return "Student is not found";
+
+        Student student = studentRepository.getOne(id);
+
+        student.setFirstName(studentDTO.getFirstName());
+        student.setLastName(studentDTO.getLastName());
+        student.setGroup(optionalGroup.get());
+
+        Address address = student.getAddress();
+        address.setStreet(studentDTO.getStreet());
+        address.setDistrict(studentDTO.getDistrict());
+        address.setCity(studentDTO.getCity());
+
+        addressRepository.save(address);
+        studentRepository.save(student);
+        return "Student edited successfully";
+
+    }
+
+    @DeleteMapping("/{id}")
+    public String deleteOne(@PathVariable Integer id){
+        if (studentRepository.existsById(id)) {
+            studentRepository.deleteById(id);
+            return "Student deleted successfully";
+        }
+        return "Student is not found";
+    }
 }

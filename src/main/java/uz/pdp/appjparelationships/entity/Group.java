@@ -18,11 +18,11 @@ public class Group {
 
     private String name;
 
-    @ManyToOne//MANY group TO ONE faculty
+    @ManyToOne
     private Faculty faculty;
-//
-//    @OneToMany//ONE group TO MANY students
-//    private List<Student> students;
+
+    @ManyToMany
+    private List<Subject> subjects;
 
 
 }

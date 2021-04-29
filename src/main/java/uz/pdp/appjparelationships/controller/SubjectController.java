@@ -13,7 +13,6 @@ public class SubjectController {
     @Autowired
     SubjectRepository subjectRepository;
 
-    //CREATE
     @RequestMapping(method = RequestMethod.POST)
     public String addSubject(@RequestBody Subject subject) {
         boolean existsByName = subjectRepository.existsByName(subject.getName());
@@ -23,14 +22,8 @@ public class SubjectController {
         return "Subject added";
     }
 
-    //READ
-//    @RequestMapping(method = RequestMethod.GET)
     @GetMapping
     public List<Subject> getSubjects() {
-        List<Subject> subjectList = subjectRepository.findAll();
-        return subjectList;
+        return subjectRepository.findAll();
     }
-
-
-
 }

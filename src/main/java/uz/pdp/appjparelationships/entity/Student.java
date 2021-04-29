@@ -22,12 +22,10 @@ public class Student {
     @Column(nullable = false)
     private String lastName;
 
-    @OneToOne//ONE student TO ONE address*** ONE address TO ONE student
+    @OneToOne
     private Address address;
 
     @ManyToOne
     private Group group;
 
-    @ManyToMany
-    private List<Subject> subjects;
 }
