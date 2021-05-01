@@ -13,6 +13,7 @@ import uz.pdp.appjparelationships.repository.AddressRepository;
 import uz.pdp.appjparelationships.repository.GroupRepository;
 import uz.pdp.appjparelationships.repository.StudentRepository;
 
+import java.util.Objects;
 import java.util.Optional;
 
 @RestController
@@ -66,9 +67,9 @@ public class StudentController {
 
     @PostMapping
     public String addOne(@RequestBody StudentDTO studentDTO) {
-        Optional<Group> optionalGroup = groupRepository.findById(studentDTO.getGroup());
-        if (!optionalGroup.isPresent()) return "Group is not found";
-        if (studentRepository.existsByFirstNameAndLastNameAndGroup_Id(studentDTO.getFirstName(), studentDTO.getLastName(), studentDTO.getGroup())) {
+        Optional<Group> optionalGroup = groupRepository.findById(studentDTO.getGroupId());
+        if (!optionalGroup.isPresent()) return "Group is not found!";
+        if (studentRepository.existsByFirstNameAndLastNameAndGroup_Id(studentDTO.getFirstName(), studentDTO.getLastName(), studentDTO.getGroupId())) {
             return "Student is already exist";
         }
         Address address = new Address();
@@ -89,7 +90,7 @@ public class StudentController {
 
     @PutMapping("/{id}")
     public String editOne(@PathVariable Integer id, @RequestBody StudentDTO studentDTO) {
-        Optional<Group> optionalGroup = groupRepository.findById(studentDTO.getGroup());
+        Optional<Group> optionalGroup = groupRepository.findById(studentDTO.getGroupId());
         if (!optionalGroup.isPresent()) return "Group is not found";
 
         Optional<Student> optionalStudent = studentRepository.findById(id);
@@ -97,11 +98,10 @@ public class StudentController {
 
         Student student = studentRepository.getOne(id);
 
-        Address addressExist = new Address(studentDTO.getCity(), studentDTO.getDistrict(), studentDTO.getStreet());
+        Address addressExist = new Address(student.getAddress().getId(),studentDTO.getCity(), studentDTO.getDistrict(), studentDTO.getStreet());
 
-
-        boolean exists = studentRepository.existsByFirstNameAndLastNameAndGroup_Id(studentDTO.getFirstName(), studentDTO.getLastName(), studentDTO.getGroup());
-        if (exists&&student.getAddress().equals(addressExist)) {
+        boolean exists = studentRepository.existsByFirstNameAndLastNameAndGroup_Id(studentDTO.getFirstName(), studentDTO.getLastName(), studentDTO.getGroupId());
+        if (exists&& Objects.equals(student.getAddress(), addressExist)) {
             return "Student is already exist";
         }
         if (!student.getFirstName().equals(studentDTO.getFirstName())) {
@@ -110,7 +110,7 @@ public class StudentController {
         if (!student.getLastName().equals(studentDTO.getLastName())) {
             student.setLastName(studentDTO.getLastName());
         }
-        if (!student.getGroup().equals(groupRepository.getOne(studentDTO.getGroup()))) {
+        if (!student.getGroup().equals(groupRepository.getOne(studentDTO.getGroupId()))) {
             student.setGroup(optionalGroup.get());
         }
 

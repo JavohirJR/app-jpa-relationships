@@ -9,5 +9,5 @@ public class StudentDTO {
     private String city;
     private String district;
     private String street;
-    private Integer group;
+    private Integer groupId;
 }
