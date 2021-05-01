@@ -26,6 +26,7 @@ public class StudentController {
 
     @Autowired
     AddressRepository addressRepository;
+
     //1. VAZIRLIK
     @GetMapping("/forMinistry")
     public Page<Student> getStudentListForMinistry(@RequestParam int page) {
@@ -40,31 +41,36 @@ public class StudentController {
         Pageable pageable = PageRequest.of(page, 10);
         return studentRepository.findAllByGroup_Faculty_UniversityId(universityId, pageable);
     }
+
     //3. FACULTY DEKANAT
     @GetMapping(value = "/forFaculty/{facId}")
     public Page<Student> getStudentsForFaculty(@PathVariable Integer facId,
-                                               @RequestParam int page){
+                                               @RequestParam int page) {
         Pageable pageable = PageRequest.of(page, 10);
         return studentRepository.findAllByGroup_Faculty_Id(facId, pageable);
     }
+
     //4. GROUP OWNER
     @GetMapping(value = "/forGroup/{groupId}")
     public Page<Student> getStudentsForGroup(@PathVariable Integer groupId,
-                                               @RequestParam int page){
+                                             @RequestParam int page) {
         Pageable pageable = PageRequest.of(page, 10);
         return studentRepository.findAllByGroup_Id(groupId, pageable);
     }
 
     @GetMapping("/{id}")
-    public Student getOne(@PathVariable Integer id){
+    public Student getOne(@PathVariable Integer id) {
         Optional<Student> optionalStudent = studentRepository.findById(id);
         return optionalStudent.orElseGet(Student::new);
     }
 
     @PostMapping
-    public String addOne(@RequestBody StudentDTO studentDTO){
+    public String addOne(@RequestBody StudentDTO studentDTO) {
         Optional<Group> optionalGroup = groupRepository.findById(studentDTO.getGroup());
         if (!optionalGroup.isPresent()) return "Group is not found";
+        if (studentRepository.existsByFirstNameAndLastNameAndGroup_Id(studentDTO.getFirstName(), studentDTO.getLastName(), studentDTO.getGroup())) {
+            return "Student is already exist";
+        }
         Address address = new Address();
         address.setCity(studentDTO.getCity());
         address.setDistrict(studentDTO.getDistrict());
@@ -82,7 +88,7 @@ public class StudentController {
     }
 
     @PutMapping("/{id}")
-    public String editOne(@PathVariable Integer id, @RequestBody StudentDTO studentDTO){
+    public String editOne(@PathVariable Integer id, @RequestBody StudentDTO studentDTO) {
         Optional<Group> optionalGroup = groupRepository.findById(studentDTO.getGroup());
         if (!optionalGroup.isPresent()) return "Group is not found";
 
@@ -91,9 +97,22 @@ public class StudentController {
 
         Student student = studentRepository.getOne(id);
 
-        student.setFirstName(studentDTO.getFirstName());
-        student.setLastName(studentDTO.getLastName());
-        student.setGroup(optionalGroup.get());
+        Address addressExist = new Address(studentDTO.getCity(), studentDTO.getDistrict(), studentDTO.getStreet());
+
+
+        boolean exists = studentRepository.existsByFirstNameAndLastNameAndGroup_Id(studentDTO.getFirstName(), studentDTO.getLastName(), studentDTO.getGroup());
+        if (exists&&student.getAddress().equals(addressExist)) {
+            return "Student is already exist";
+        }
+        if (!student.getFirstName().equals(studentDTO.getFirstName())) {
+            student.setFirstName(studentDTO.getFirstName());
+        }
+        if (!student.getLastName().equals(studentDTO.getLastName())) {
+            student.setLastName(studentDTO.getLastName());
+        }
+        if (!student.getGroup().equals(groupRepository.getOne(studentDTO.getGroup()))) {
+            student.setGroup(optionalGroup.get());
+        }
 
         Address address = student.getAddress();
         address.setStreet(studentDTO.getStreet());
@@ -107,7 +126,7 @@ public class StudentController {
     }
 
     @DeleteMapping("/{id}")
-    public String deleteOne(@PathVariable Integer id){
+    public String deleteOne(@PathVariable Integer id) {
         if (studentRepository.existsById(id)) {
             studentRepository.deleteById(id);
             return "Student deleted successfully";

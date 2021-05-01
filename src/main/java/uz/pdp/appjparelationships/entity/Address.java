@@ -24,5 +24,9 @@ public class Address {
     @Column(nullable = false)
     private String street;//U.Nosir ko'chasi
 
-
+    public Address(String city, String district, String street) {
+        this.city = city;
+        this.district = district;
+        this.street = street;
+    }
 }

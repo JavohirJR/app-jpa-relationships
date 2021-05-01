@@ -15,4 +15,6 @@ public interface StudentRepository extends JpaRepository<Student, Integer> {
 
     Page<Student> findAllByGroup_Id(Integer group_id, Pageable pageable);
 
+    boolean existsByFirstNameAndLastNameAndGroup_Id(String firstName, String lastName, Integer group_id);
+
 }
