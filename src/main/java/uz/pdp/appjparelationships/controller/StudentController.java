@@ -128,6 +128,7 @@ public class StudentController {
     @DeleteMapping("/{id}")
     public String deleteOne(@PathVariable Integer id) {
         if (studentRepository.existsById(id)) {
+            addressRepository.deleteById(studentRepository.getOne(id).getAddress().getId());
             studentRepository.deleteById(id);
             return "Student deleted successfully";
         }
