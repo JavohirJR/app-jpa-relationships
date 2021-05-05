@@ -72,6 +72,9 @@ public class UniversityController {
     //DELETE
     @RequestMapping(value = "/university/{id}",method = RequestMethod.DELETE)
     public String deleteUniversity(@PathVariable Integer id){
+        Optional<University> optionalUniversity = universityRepository.findById(id);
+        if (!optionalUniversity.isPresent()) return "university is not found";
+        addressRepository.delete(optionalUniversity.get().getAddress());
         universityRepository.deleteById(id);
         return "University deleted";
     }
